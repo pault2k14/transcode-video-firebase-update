@@ -15,7 +15,6 @@ exports.handler = function(event, context, callback) {
 
     var params = {
         PipelineId: '1519198472912-d3rtep',
-        OutputKeyPrefix: outputKey + '/',
         Input: {
             Key: sourceKey
         },
