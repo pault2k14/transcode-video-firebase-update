@@ -9,7 +9,8 @@
     "predeploy": "7za a -tzip Lambda-Deployment.zip"
   },
   "dependencies": {
-    "aws-sdk": "latest"
+    "aws-sdk": "latest",
+    "firebase-admin": "^5.12.0"
   },
   "author": "Paul Thompson",
   "license": "BSD-2-Clause",
