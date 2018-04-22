@@ -12,46 +12,25 @@ firebase.initializeApp({
     databaseURL: process.env.DATABASE_URL
 });
 
-function pushVideoEntryToFirebase(key, callback) {
-    console.log('Adding video entry to firebase at key:', key);
-    var database = firebase.database().ref();
-    database.child('videos').child(key)
-        .set({
-            transcoding: true
-        })
-        .then(function () {
-            callback(null, 'Video record saved to firebase');
-        })
-        .catch(function (err) {
-            callback(err);
-        });
-}
+exports.handler = function(event, context, callback) {
 
-exports.handler = function (event, context, callback) {
-    context.callbackWaitsForEmptyEventLoop = false;
-    var key = event.Records[0].s3.object.key;
+    context.callbackWaitForEmptyEventLoop = false;
+
+    var message = JSON.parse(event.Records[0].Sns.Message);
+
+    var key = message.Records[0].s3.object.key;
+    var bucket = message.Records[0].s3.bucket.name;
     var sourceKey = decodeURIComponent(key.replace(/\+/g, ' '));
-    var outputKey = sourceKey.split('.')[0];
-    var uniqueVideoKey = outputKey.split('/')[0];
-    var params = {
-        PipelineId: process.env.ELASTIC_TRANSCODER_PIPELINE_ID,
-        Input: {
-            Key: sourceKey
-        },
-        Outputs: [
-            {
-                Key: outputKey + '-720p' + '.mp4',
-                PresetId: '1351620000001-000010'
-            }
-        ]
-    };
-    elasticTranscoder.createJob(params, function (error, data) {
-        if (error) {
-            console.log('Error creating elastic transcoder job.');
-            callback(error);
-            return;
-        }
-        console.log('Elastic transcoder job created successfully');
-        pushVideoEntryToFirebase(uniqueVideoKey, callback);
+
+    var uniqueVideoKey = sourceKey.split('/')[0];
+
+    var database = firebase.database().ref();
+
+    database.child('videos').child(uniqueVideoKey).set({
+        transcoding: false,
+        key: key,
+        bucket: process.env.S3
+    }).catch(function(err) {
+        callback(err);
     });
 };
